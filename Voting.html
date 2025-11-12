@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Voting System</title>
+    
+    <style>
+        /* --- General Setup --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            background-color: #f4f4f4;
+            line-height: 1.6;
+        }
+        
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* --- Page Hiding --- */
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+
+        /* --- Header / Navigation --- */
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        nav h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        nav a:hover, nav a.active-nav {
+            background-color: #555;
+        }
+
+        /* --- Forms (Login/Signup) --- */
+        .form-container {
+            background-color: #fff;
+            padding: 30px;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-container h2 {
+            text-align: center;
+            margin-top: 0;
+            color: #333;
+        }
+
+        form input {
+            margin: 10px 0;
+            padding: 12px;
+            width: calc(100% - 24px); /* Account for padding */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        form button {
+            width: 100%;
+            padding: 12px 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            border-radius: 5px;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        form button:hover {
+            background-color: #555;
+        }
+        
+        #toggle-auth {
+            text-align: center;
+            margin-top: 20px;
+            color: #007BFF;
+            cursor: pointer;
+        }
+        #toggle-auth:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Dashboard / Voting Section --- */
+        #vote-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .candidate-card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .candidate-card h3 {
+            margin-top: 0;
+        }
+        .candidate-card p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .candidate-card button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .candidate-card button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* --- Results Section --- */
+        #results-section {
+             background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-item {
+            margin-bottom: 20px;
+        }
+        .result-item-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .result-bar-container {
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .result-bar {
+            height: 20px;
+            background-color: #007BFF;
+            width: 0%; /* Set by JS */
+            transition: width 0.5s ease-in-out;
+            text-align: right;
+            color: white;
+            font-size: 0.8em;
+            padding-right: 5px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav>
+            <h1>VoteSystem</h1>
+            <div id="nav-links">
+                <a href="#dashboard" class="nav-link" data-page="page-dashboard">Dashboard</a>
+                <a href="#results" class="nav-link" data-page="page-results">Results</a>
+                <a href="#login" id="auth-link" data-page="page-login">Login</a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="app">
+        <div id="page-login" class="page">
+            <div class="form-container">
+                <form id="login-form">
+                    <h2>Login</h2>
+                    <input type="text" id="login-username" placeholder="Username" required>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                    <button type="submit">Login</button>
+                </form>
+                
+                <form id="signup-form" style="display:none;">
+                    <h2>Sign Up</h2>
+                    <input type="text" id="signup-username" placeholder="Username" required>
+                    <input type="password" id="signup-password" placeholder="Password" required>
+                    <input type="email" id="signup-email" placeholder="Email" required>
+                    <button type="submit">Sign Up</button>
+                </form>
+                
+                <p id="toggle-auth">Don't have an account? Sign Up</p>
+                <p id="auth-message" style="color:red; text-align:center;"></p>
+            </div>
+        </div>
+
+        <div id="page-dashboard" class="page">
+            <h2 id="welcome-message">Vote for your Favorite Candidate</h2>
+            <div id="vote-section">
+                </div>
+        </div>
+
+        <div id="page-results" class="page">
+            <h2>Current Results</h2>
+            <div id="results-section">
+                </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = {
+                // --- App State ---
+                currentUser: null,
+                
+                // --- DOM Elements ---
+                navLinks: document.querySelectorAll('.nav-link'),
+                authLink: document.getElementById('auth-link'),
+                pages: document.querySelectorAll('.page'),
+                
+                loginForm: document.getElementById('login-form'),
+                signupForm: document.getElementById('signup-form'),
+                toggleAuthLink: document.getElementById('toggle-auth'),
+                authMessage: document.getElementById('auth-message'),
+                
+                voteSection: document.getElementById('vote-section'),
+                resultsSection: document.getElementById('results-section'),
+                welcomeMessage: document.getElementById('welcome-message'),
+
+                // --- Main Initializer ---
+                init() {
+                    this.initDB();
+                    this.setupEventListeners();
+                    this.checkAuth();
+                    this.navigate('page-dashboard');
+                },
+                
+                // --- Database Simulation (localStorage) ---
+                initDB() {
+                    // Seed initial candidates
+                    if (!localStorage.getItem('candidates')) {
+                        const candidates = [
+                            { id: 1, name: 'Alice Smith', party: 'Vision Party' },
+                            { id: 2, name: 'Bob Johnson', party: 'Future Party' },
+                            { id: 3, name: 'Charlie Brown', party: 'Progress Party' }
+                        ];
+                        localStorage.setItem('candidates', JSON.stringify(candidates));
+                    }
+                    // Init users and votes if they don't exist
+                    if (!localStorage.getItem('users')) {
+                        localStorage.setItem('users', JSON.stringify([]));
+                    }
+                    if (!localStorage.getItem('votes')) {
+                        localStorage.setItem('votes', JSON.stringify({}));
+                    }
+                },
+                
+                // --- Event Listeners ---
+                setupEventListeners() {
+                    // Navigation
+                    document.getElementById('nav-links').addEventListener('click', (e) => {
+                        if (e.target.classList.contains('nav-link')) {
+                            e.preventDefault();
+                            if (e.target.id === 'auth-link' && this.currentUser) {
+                                this.logout();
+                            } else {
+                                this.navigate(e.target.dataset.page);
+                            }
+                        }
+                    });
+                    
+                    // Auth form toggle
+                    this.toggleAuthLink.addEventListener('click', this.toggleAuthForms.bind(this));
+                    
+                    // Auth form submits
+                    this.loginForm.addEventListener('submit', this.handleLogin.bind(this));
+                    this.signupForm.addEventListener('submit', this.handleSignup.bind(this));
+                    
+                    // Vote button (Event Delegation)
+                    this.voteSection.addEventListener('click', (e) => {
+                        if (e.target.classList.contains('vote-btn')) {
+                            this.handleVote(e.target.dataset.id);
+                        }
+                    });
+                },
+
+                // --- Page Navigation ---
+                navigate(pageId) {
+                    if (!this.currentUser && pageId !== 'page-login') {
+                        pageId = 'page-login';
+                    }
+                    
+                    this.pages.forEach(page => page.classList.remove('active'));
+                    document.getElementById(pageId).classList.add('active');
+                    
+                    this.navLinks.forEach(link => link.classList.remove('active-nav'));
+                    const activeLink = document.querySelector(`.nav-link[data-page="${pageId}"]`);
+                    if(activeLink) activeLink.classList.add('active-nav');
+
+                    // Refresh page content on navigation
+                    if (pageId === 'page-dashboard') this.renderDashboard();
+                    if (pageId === 'page-results') this.renderResults();
+                },
+
+                // --- Authentication ---
+                checkAuth() {
+                    const user = sessionStorage.getItem('currentUser');
+                    if (user) {
+                        this.currentUser = JSON.parse(user);
+                        this.authLink.textContent = 'Logout';
+                        this.authLink.dataset.page = '';
+                    } else {
+                        this.currentUser = null;
+                        this.authLink.textContent = 'Login';
+                        this.authLink.dataset.page = 'page-login';
+                    }
+                },
+
+                handleLogin(e) {
+                    e.preventDefault();
+                    this.authMessage.textContent = '';
+                    const username = document.getElementById('login-username').value;
+                    const password = document.getElementById('login-password').value;
+                    
+                    const users = JSON.parse(localStorage.getItem('users'));
+                    const user = users.find(u => u.username === username && u.password === password); // Note: Never store plain passwords!
+                    
+                    if (user) {
+                        sessionStorage.setItem('currentUser', JSON.stringify(user));
+                        this.checkAuth();
+                        this.navigate('page-dashboard');
+                    } else {
+                        this.authMessage.textContent = 'Invalid credentials';
+                    }
+                },
+                
+                handleSignup(e) {
+                    e.preventDefault();
+                    this.authMessage.textContent = '';
+                    const username = document.getElementById('signup-username').value;
+                    const password = document.getElementById('signup-password').value;
+                    const email = document.getElementById('signup-email').value;
+
+                    const users = JSON.parse(localStorage.getItem('users'));
+                    if (users.find(u => u.username === username)) {
+                        this.authMessage.textContent = 'Username already exists';
+                        return;
+                    }
+                    
+                    const newUser = { username, password, email, hasVoted: false };
+                    users.push(newUser);
+                    localStorage.setItem('users', JSON.stringify(users));
+                    
+                    this.toggleAuthForms(); // Switch back to login
+                    this.authMessage.textContent = 'Sign up successful! Please login.';
+                },
+                
+                logout() {
+                    sessionStorage.removeItem('currentUser');
+                    this.checkAuth();
+                    this.navigate('page-login');
+                },
+
+                toggleAuthForms() {
+                    this.authMessage.textContent = '';
+                    const isLoginVisible = this.loginForm.style.display !== 'none';
+                    this.loginForm.style.display = isLoginVisible ? 'none' : 'block';
+                    this.signupForm.style.display = isLoginVisible ? 'block' : 'none';
+                    this.toggleAuthLink.textContent = isLoginVisible ? 'Already have an account? Login' : "Don't have an account? Sign Up";
+                },
+
+                // --- Page Rendering ---
+                renderDashboard() {
+                    if (!this.currentUser) return;
+                    
+                    this.welcomeMessage.textContent = `Welcome, ${this.currentUser.username}!`;
+                    const candidates = JSON.parse(localStorage.getItem('candidates'));
+                    const users = JSON.parse(localStorage.getItem('users'));
+                    const user = users.find(u => u.username === this.currentUser.username);
+                    
+                    this.voteSection.innerHTML = ''; // Clear old content
+                    candidates.forEach(c => {
+                        this.voteSection.innerHTML += `
+                            <div class="candidate-card">
+                                <h3>${c.name}</h3>
+                                <p>${c.party}</p>
+                                <button class="vote-btn" data-id="${c.id}" ${user.hasVoted ? 'disabled' : ''}>
+                                    ${user.hasVoted ? 'Voted' : 'Vote'}
+                                </button>
+                            </div>
+                        `;
+                    });
+                },
+
+                renderResults() {
+                    const candidates = JSON.parse(localStorage.getItem('candidates'));
+                    const votes = JSON.parse(localStorage.getItem('votes'));
+                    
+                    let totalVotes = 0;
+                    Object.values(votes).forEach(count => totalVotes += count);
+                    
+                    this.resultsSection.innerHTML = '';
+                    candidates.forEach(c => {
+                        const candidateVotes = votes[c.id] || 0;
+                        const votePercent = totalVotes === 0 ? 0 : ((candidateVotes / totalVotes) * 100).toFixed(1);
+                        
+                        this.resultsSection.innerHTML += `
+                            <div class="result-item">
+                                <div class="result-item-header">
+                                    <span>${c.name} (${c.party})</span>
+                                    <span>${candidateVotes} Votes (${votePercent}%)</span>
+                                </div>
+                                <div class="result-bar-container">
+                                    <div class="result-bar" style="width: ${votePercent}%;">${votePercent > 0 ? '&nbsp;' : ''}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                },
+                
+                // --- Voting Logic ---
+                handleVote(candidateId) {
+                    const users = JSON.parse(localStorage.getItem('users'));
+                    const userIndex = users.findIndex(u => u.username === this.currentUser.username);
+                    
+                    if (users[userIndex].hasVoted) {
+                        alert('You have already voted!');
+                        return;
+                    }
+                    
+                    // 1. Update user status
+                    users[userIndex].hasVoted = true;
+                    this.currentUser.hasVoted = true; // Update local state
+                    sessionStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+                    localStorage.setItem('users', JSON.stringify(users));
+
+                    // 2. Record the vote
+                    const votes = JSON.parse(localStorage.getItem('votes'));
+                    votes[candidateId] = (votes[candidateId] || 0) + 1;
+                    localStorage.setItem('votes', JSON.stringify(votes));
+                    
+                    // 3. Re-render dashboard
+                    this.renderDashboard();
+                    alert('Your vote has been cast!');
+                }
+            };
+
+            // Start the application
+            app.init();
+        });
+    </script>
+</body>
+</html>
